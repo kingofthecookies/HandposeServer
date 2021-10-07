@@ -16,22 +16,16 @@ let io = socket(server);
 
 // execute newConnection when connection event occurs
 io.sockets.on('connection', newConnection);
+
 function newConnection(socket) {
     console.log('new connection ' + socket.id);
 
     // execute newPrediction when prediction event occurs
     socket.on('prediction', newPrediction);
-    function newPrediction(data){
+
+    function newPrediction(data) {
         // emits to all sockets but this
         socket.broadcast.emit('prediction', data);
-        console.log(data);
-    }
-
-    // execute newTimeout when prediction event occurs
-    socket.on('timeout', newTimeout);
-    function newTimeout(data){
-        // emits to all sockets but this
-        socket.broadcast.emit('timeout', data);
-        console.log('timeout');
+        console.log("data received from " + socket.id);
     }
 }
