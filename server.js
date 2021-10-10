@@ -26,6 +26,6 @@ function newConnection(socket) {
     function newPrediction(data) {
         // emits to all sockets but this
         socket.broadcast.emit('prediction', data);
-        console.log("data received from " + socket.id);
+        // console.log("data received from " + socket.id);
     }
 }

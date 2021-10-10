@@ -2,38 +2,46 @@ const videoElement = document.getElementsByClassName('input_video')[0];
 const canvasElement = document.getElementsByClassName('output_canvas')[0];
 const canvasCtx = canvasElement.getContext('2d');
 
-let predictionData;
-
+let recievedData;
+let localData;
 
 // initiate socket connection to server url
 socket = io.connect('http://localhost:3000');
 
-// execute processData when prediction event occurs
 socket.on('prediction', (data) => {
     console.log("data recieved");
-    if (data.multiHandLandmarks) {
-        predictionData = data.multiHandLandmarks;
-    }
+    recievedData = data;
 })
 
 function onResults(results) {
-    socket.emit('prediction', results);
+    if (results.multiHandLandmarks) {
+        localData = results.multiHandLandmarks;
+        socket.emit('prediction', localData);
+    }
+}
 
+window.requestAnimationFrame(loop);
+
+function loop(timeStamp) {
+    draw();
+    // Keep requesting new frames
+    window.requestAnimationFrame(loop);
+}
+
+function draw() {
     canvasCtx.save();
     canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-    // canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
 
-    if (results.multiHandLandmarks) {
-        // console.log(results.multiHandLandmarks);
-        for (const landmarks of results.multiHandLandmarks) {
+    if (localData) {
+        for (const landmarks of localData) {
             drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS,
                 {color: '#00FF00', lineWidth: 5});
             drawLandmarks(canvasCtx, landmarks, {color: '#FF0000', lineWidth: 2});
         }
     }
 
-    if (predictionData) {
-        for (const landmarks of predictionData) {
+    if (recievedData) {
+        for (const landmarks of recievedData) {
             drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS,
                 {color: '#FF0000', lineWidth: 5});
             drawLandmarks(canvasCtx, landmarks, {color: '#00FF00', lineWidth: 2});
@@ -47,11 +55,13 @@ const hands = new Hands({
         return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
     }
 });
+
 hands.setOptions({
     maxNumHands: 1,
     minDetectionConfidence: 0.5,
     minTrackingConfidence: 0.5
 });
+
 hands.onResults(onResults);
 
 const camera = new Camera(videoElement, {
@@ -61,4 +71,5 @@ const camera = new Camera(videoElement, {
     width: 1280,
     height: 720
 });
+
 camera.start();
