@@ -2,6 +2,8 @@ const videoElement = document.getElementsByClassName('input_video')[0];
 const canvasElement = document.getElementsByClassName('output_canvas')[0];
 const canvasCtx = canvasElement.getContext('2d');
 
+let predictionData;
+
 
 // initiate socket connection to server url
 socket = io.connect('http://localhost:3000');
@@ -9,14 +11,8 @@ socket = io.connect('http://localhost:3000');
 // execute processData when prediction event occurs
 socket.on('prediction', (data) => {
     console.log("data recieved");
-
     if (data.multiHandLandmarks) {
-        // console.log(results.multiHandLandmarks);
-        for (const landmarks of data.multiHandLandmarks) {
-            drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS,
-                {color: '#00FF00', lineWidth: 5});
-            drawLandmarks(canvasCtx, landmarks, {color: '#FF0000', lineWidth: 2});
-        }
+        predictionData = data.multiHandLandmarks;
     }
 })
 
@@ -33,6 +29,14 @@ function onResults(results) {
             drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS,
                 {color: '#00FF00', lineWidth: 5});
             drawLandmarks(canvasCtx, landmarks, {color: '#FF0000', lineWidth: 2});
+        }
+    }
+
+    if (predictionData) {
+        for (const landmarks of predictionData) {
+            drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS,
+                {color: '#FF0000', lineWidth: 5});
+            drawLandmarks(canvasCtx, landmarks, {color: '#00FF00', lineWidth: 2});
         }
     }
     canvasCtx.restore();
