@@ -1,16 +1,18 @@
 const videoElement = document.getElementsByClassName('input_video')[0];
 const canvasElement = document.getElementsByClassName('output_canvas')[0];
-const canvasCtx = canvasElement.getContext('2d');
+const context = canvasElement.getContext('2d');
 
-let recievedData;
+let externalData;
 let localData;
+let externalConvexHull;
+let localConvexHull;
 
 // initiate socket connection to server url
 socket = io.connect('http://localhost:3000');
 
 socket.on('prediction', (data) => {
     console.log("data recieved");
-    recievedData = data;
+    externalData = data;
 })
 
 function onResults(results) {
@@ -29,25 +31,26 @@ function loop(timeStamp) {
 }
 
 function draw() {
-    canvasCtx.save();
-    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    context.save();
+    context.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
     if (localData) {
         for (const landmarks of localData) {
-            drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS,
+            drawConnectors(context, landmarks, HAND_CONNECTIONS,
                 {color: '#00FF00', lineWidth: 5});
-            drawLandmarks(canvasCtx, landmarks, {color: '#FF0000', lineWidth: 2});
+            drawLandmarks(context, landmarks, {color: '#FF0000', lineWidth: 2});
         }
     }
 
-    if (recievedData) {
-        for (const landmarks of recievedData) {
-            drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS,
+    if (externalData) {
+        for (const landmarks of externalData) {
+            drawConnectors(context, landmarks, HAND_CONNECTIONS,
                 {color: '#FF0000', lineWidth: 5});
-            drawLandmarks(canvasCtx, landmarks, {color: '#00FF00', lineWidth: 2});
+            drawLandmarks(context, landmarks, {color: '#00FF00', lineWidth: 2});
         }
     }
-    canvasCtx.restore();
+
+    context.restore();
 }
 
 const hands = new Hands({
