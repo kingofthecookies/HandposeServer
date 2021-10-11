@@ -5,6 +5,7 @@ let externalData;
 let localData;
 let externalConvexHull;
 let localConvexHull;
+let intersectionArea;
 
 // initiate socket connection to server url
 socket = io.connect('http://localhost:3000');
@@ -79,6 +80,20 @@ function draw() {
         endShape(CLOSE);
     }
 
+    if (localConvexHull && externalConvexHull) {
+        intersectionArea = intersect(localConvexHull, externalConvexHull);
+        console.log(intersectionArea);
+
+        if (intersectionArea.length > 0) {
+            noStroke();
+            fill(255, 0, 255);
+            beginShape();
+            for (let i = 0; i < intersectionArea[0].length; i++) {
+                vertex(intersectionArea[0][i].x * 1920, intersectionArea[0][i].y * 1440);
+            }
+            endShape(CLOSE);
+        }
+    }
 }
 
 const hands = new Hands({
