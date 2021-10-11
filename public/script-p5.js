@@ -10,7 +10,6 @@ let localConvexHull;
 socket = io.connect('http://localhost:3000');
 
 socket.on('prediction', (data) => {
-    console.log("data recieved");
     externalData = data;
 
     for (let i = 0; i < externalData.length; i++) {
