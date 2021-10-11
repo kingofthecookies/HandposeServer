@@ -1,6 +1,7 @@
 const videoElement = document.getElementsByClassName('input_video')[0];
 const canvasElement = document.getElementsByClassName('output_canvas')[0];
 const context = canvasElement.getContext('2d');
+const convexHull = new ConvexHullGrahamScan();
 
 let externalData;
 let localData;
@@ -13,12 +14,27 @@ socket = io.connect('http://localhost:3000');
 socket.on('prediction', (data) => {
     console.log("data recieved");
     externalData = data;
+
+    for (let i = 0; i < externalData.length; i++) {
+        convexHull.addPoint(externalData[0][i].x, externalData[0][i].y);
+    }
+    externalConvexHull = convexHull.getHull();
+    console.log(externalConvexHull);
 })
 
 function onResults(results) {
     if (results.multiHandLandmarks) {
-        localData = results.multiHandLandmarks;
-        socket.emit('prediction', localData);
+        if (results.multiHandLandmarks.length > 0) {
+            localData = results.multiHandLandmarks;
+            socket.emit('prediction', localData);
+
+            for (let i = 0; i < localData.length; i++) {
+                convexHull.addPoint(localData[0][i].x, localData[0][i].y);
+            }
+            localConvexHull = convexHull.getHull();
+            console.log(localData);
+            console.log(localConvexHull);
+        }
     }
 }
 
@@ -29,6 +45,7 @@ function loop(timeStamp) {
     // Keep requesting new frames
     window.requestAnimationFrame(loop);
 }
+
 
 function draw() {
     context.save();
