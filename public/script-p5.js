@@ -41,6 +41,8 @@ function setup() {
 
 function draw() {
     background(0);
+    translate(width, 0);
+    scale(-1, 1);
 
     if (localData) {
         fill(0, 255, 0);
