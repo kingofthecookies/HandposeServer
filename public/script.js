@@ -1,6 +1,9 @@
 const videoElement = document.getElementsByClassName('input_video')[0];
 let convexHull = new ConvexHullGrahamScan();
 
+let connectButton;
+let serialController;
+
 let externalData = 0;
 let localData = 0;
 let externalConvexHull = 0;
@@ -47,6 +50,16 @@ function onResults(results) {
 
 function setup() {
     createCanvas(1920, 1440);
+
+    // init serial connection with baudrate
+    serialController = new SerialController(57600);
+
+    // init gui
+    connectButton = createButton("Initialize Serial Connection");
+    connectButton.class("button");
+    connectButton.mousePressed(() => {
+        serialController.init();
+    });
 }
 
 function draw() {
@@ -105,16 +118,31 @@ function draw() {
         }
     }
 
+    if (intersectionArea) {
+        if (intersectionArea.length > 0) {
+            let randomInt = Math.floor(Math.random() * 180);
+            console.log("Berührung");
+
+            // write value to serial port
+            serialController.write("WHATEVER");
+            serialController.write(" "); // If sending multiple variables, they are seperated with a blank space
+            serialController.write(randomInt); // send integer as string
+            serialController.write("\r\n"); // to finish your message, send a "new line character"
+        }
+    }
+
     // Decrementing the local and external Timers
     localDataTimeout -= 1;
     externalDataTimeout -= 1;
-    if(localDataTimeout <= 0){
+    if (localDataTimeout <= 0) {
         localData = 0;
         localConvexHull = 0;
+        intersectionArea = 0;
     }
-    if(externalDataTimeout <= 0){
+    if (externalDataTimeout <= 0) {
         externalData = 0;
         externalConvexHull = 0;
+        intersectionArea = 0;
     }
 }
 
