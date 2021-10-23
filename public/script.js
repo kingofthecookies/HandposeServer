@@ -1,9 +1,8 @@
 const videoElement = document.getElementsByClassName('input_video')[0];
-let convexHull = new ConvexHullGrahamScan();
 
+let convexHull;
 let connectButton;
 let serialController;
-
 let externalData = 0;
 let localData = 0;
 let externalConvexHull = 0;
@@ -51,6 +50,9 @@ function onResults(results) {
 function setup() {
     createCanvas(1920, 1440);
 
+    // init graham scan algorithm
+    convexHull = new ConvexHullGrahamScan();
+
     // init serial connection with baudrate
     serialController = new SerialController(57600);
 
@@ -68,53 +70,25 @@ function draw() {
     scale(-1, 1);
 
     if (localData) {
-        fill(0, 255, 0);
-        noStroke();
-        for (let i = 0; i < localData.length; i++) {
-            ellipse(localData[i].x * 1920, localData[i].y * 1440, 30, 30);
-        }
+        drawLandmarksAsPoints(localData, 0);
     }
 
     if (externalData) {
-        fill(255, 0, 0);
-        noStroke();
-        for (let i = 0; i < externalData.length; i++) {
-            ellipse(externalData[i].x * 1920, externalData[i].y * 1440, 30, 30);
-        }
+        drawLandmarksAsPoints(externalData, 1);
     }
 
     if (localConvexHull) {
-        stroke(255, 255, 255);
-        strokeWeight(5);
-        noFill();
-        beginShape();
-        for (let i = 0; i < localConvexHull.length; i++) {
-            vertex(localConvexHull[i].x * 1920, localConvexHull[i].y * 1440);
-        }
-        endShape(CLOSE);
+        drawConvexHull(localConvexHull);
     }
 
     if (externalConvexHull) {
-        stroke(255, 255, 255);
-        strokeWeight(5);
-        noFill();
-        beginShape();
-        for (let i = 0; i < externalConvexHull.length; i++) {
-            vertex(externalConvexHull[i].x * 1920, externalConvexHull[i].y * 1440);
-        }
-        endShape(CLOSE);
+        drawConvexHull(externalConvexHull);
     }
 
     if (localConvexHull && externalConvexHull) {
         intersectionArea = intersect(localConvexHull, externalConvexHull);
         if (intersectionArea.length > 0) {
-            noStroke();
-            fill(255, 0, 255);
-            beginShape();
-            for (let i = 0; i < intersectionArea[0].length; i++) {
-                vertex(intersectionArea[0][i].x * 1920, intersectionArea[0][i].y * 1440);
-            }
-            endShape(CLOSE);
+            drawConvexHull(intersectionArea[0], 1);
         }
     }
 
@@ -123,6 +97,7 @@ function draw() {
         textAlign(CENTER, CENTER);
         textSize(60);
         textWidth(1);
+        noStroke();
         fill(255);
         text(Math.round(polygonArea(localConvexHull) * 100) / 100, width / 2, 50);
     }
@@ -130,7 +105,6 @@ function draw() {
     if (intersectionArea) {
         if (intersectionArea.length > 0) {
             let randomInt = Math.floor(Math.random() * 180);
-            console.log("Berührung");
 
             // write value to serial port
             serialController.write("WHATEVER");
@@ -178,3 +152,33 @@ const camera = new Camera(videoElement, {
 });
 
 camera.start();
+
+function drawLandmarksAsPoints(landmarks, color) {
+    let weight = Math.round(polygonArea(localConvexHull) * 100) / 100;
+
+    if (color === 0) {
+        fill(0, 255, 0);
+    } else if (color === 1) {
+        fill(255, 0, 0);
+    }
+    noStroke();
+    for (let i = 0; i < landmarks.length; i++) {
+        ellipse(landmarks[i].x * width, landmarks[i].y * height, 150 * weight, 150 * weight);
+    }
+}
+
+function drawConvexHull(landmarks, filled) {
+    if (filled === 1) {
+        noStroke();
+        fill(255, 0, 255);
+    } else if (!filled) {
+        stroke(255);
+        strokeWeight(5);
+        noFill();
+    }
+    beginShape();
+    for (let i = 0; i < landmarks.length; i++) {
+        vertex(landmarks[i].x * width, landmarks[i].y * height);
+    }
+    endShape(CLOSE);
+}
