@@ -118,6 +118,15 @@ function draw() {
         }
     }
 
+    if (localConvexHull) {
+        resetMatrix();
+        textAlign(CENTER, CENTER);
+        textSize(60);
+        textWidth(1);
+        fill(255);
+        text(Math.round(polygonArea(localConvexHull) * 100) / 100, width / 2, 50);
+    }
+
     if (intersectionArea) {
         if (intersectionArea.length > 0) {
             let randomInt = Math.floor(Math.random() * 180);
