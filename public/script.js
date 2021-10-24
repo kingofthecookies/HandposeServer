@@ -70,11 +70,11 @@ function draw() {
     scale(-1, 1);
 
     if (localData) {
-        drawLandmarksAsPoints(localData, 0);
+        drawLandmarksAsPoints(localData, localConvexHull, 0);
     }
 
     if (externalData) {
-        drawLandmarksAsPoints(externalData, 1);
+        drawLandmarksAsPoints(externalData, externalConvexHull, 1);
     }
 
     if (localConvexHull) {
@@ -100,6 +100,7 @@ function draw() {
         noStroke();
         fill(255);
         text(Math.round(polygonArea(localConvexHull) * 100) / 100, width / 2, 50);
+        text(getStrokeWeight(localData, localConvexHull), width / 2, 100);
     }
 
     if (intersectionArea) {
@@ -153,8 +154,8 @@ const camera = new Camera(videoElement, {
 
 camera.start();
 
-function drawLandmarksAsPoints(landmarks, color) {
-    let weight = Math.round(polygonArea(localConvexHull) * 100) / 100;
+function drawLandmarksAsPoints(landmarks, convexHull, color) {
+    let weight = getStrokeWeight(landmarks, convexHull);
 
     if (color === 0) {
         fill(0, 255, 0);
@@ -163,9 +164,10 @@ function drawLandmarksAsPoints(landmarks, color) {
     }
     noStroke();
     for (let i = 0; i < landmarks.length; i++) {
-        ellipse(landmarks[i].x * width, landmarks[i].y * height, 150 * weight, 150 * weight);
+        ellipse(landmarks[i].x * width, landmarks[i].y * height, 100 * weight, 100 * weight);
     }
 }
+
 
 function drawConvexHull(landmarks, filled) {
     if (filled === 1) {
@@ -181,4 +183,35 @@ function drawConvexHull(landmarks, filled) {
         vertex(landmarks[i].x * width, landmarks[i].y * height);
     }
     endShape(CLOSE);
+}
+
+function getStrokeWeight(points, convexHull) {
+    let area = calcPolygonArea(convexHull);
+    let weight = 0.0;
+
+    weight += distance(points[0], points[4]);
+    weight += 3 * distance(points[0], points[8]);
+    weight += 3 * distance(points[0], points[12]);
+    weight += 3 * distance(points[0], points[16]);
+    weight += 3 * distance(points[0], points[20]);
+    weight += 12 * distance(points[4], points[20]);
+    weight += 8 * distance(points[8], points[20]);
+
+    return Math.floor(area / weight * 10000) / 100;
+}
+
+function calcPolygonArea(vertices) {
+    var total = 0;
+
+    for (var i = 0, l = vertices.length; i < l; i++) {
+        var addX = vertices[i].x;
+        var addY = vertices[i == vertices.length - 1 ? 0 : i + 1].y;
+        var subX = vertices[i == vertices.length - 1 ? 0 : i + 1].x;
+        var subY = vertices[i].y;
+
+        total += (addX * addY * 0.5);
+        total -= (subX * subY * 0.5);
+    }
+
+    return Math.abs(total);
 }
