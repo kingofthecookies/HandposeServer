@@ -1,12 +1,15 @@
 const videoElement = document.getElementsByClassName('input_video')[0];
 
-let convexHull;
+let grahamScan;
 let connectButton;
 let serialController;
+
 let externalData = 0;
 let localData = 0;
 let externalConvexHull = 0;
 let localConvexHull = 0;
+let localStrokeWeight = 0.0;
+let externalStrokeWeight = 0.0;
 let intersectionArea = 0;
 let externalDataTimeout = 20;
 let localDataTimeout = 20;
@@ -20,11 +23,13 @@ socket.on('prediction', (data) => {
 
     // Finding the Convex Hull
     for (let i = 0; i < externalData.length; i++) {
-        convexHull.addPoint(externalData[i].x, externalData[i].y);
+        grahamScan.addPoint(externalData[i].x, externalData[i].y);
     }
-    externalConvexHull = convexHull.getHull();
-    convexHull = new ConvexHullGrahamScan(); // Reset the GrahamScan by overwriting it
+    externalConvexHull = grahamScan.getHull();
+    grahamScan = new ConvexHullGrahamScan(); // Reset the GrahamScan by overwriting it
 
+    // Compute the Stroke Weight
+    externalStrokeWeight = getStrokeWeight(externalData, externalConvexHull);
     externalDataTimeout = 20; // Reset the Timer for external Data
 })
 
@@ -35,13 +40,15 @@ function onResults(results) {
             localData = results.multiHandLandmarks[0];
             socket.emit('prediction', localData); // Emit the new prediction to Server
 
-            //Finding the Convex Hull
+            // Finding the Convex Hull
             for (let i = 0; i < localData.length; i++) {
-                convexHull.addPoint(localData[i].x, localData[i].y);
+                grahamScan.addPoint(localData[i].x, localData[i].y);
             }
-            localConvexHull = convexHull.getHull();
-            convexHull = new ConvexHullGrahamScan(); // Reset the GrahamScan by overwriting it
+            localConvexHull = grahamScan.getHull();
+            grahamScan = new ConvexHullGrahamScan(); // Reset the GrahamScan by overwriting it
 
+            // Compute the Stroke Weight
+            localStrokeWeight = getStrokeWeight(localData, localConvexHull);
             localDataTimeout = 20; // Reset the Timer for internal Data
         }
     }
@@ -51,7 +58,7 @@ function setup() {
     createCanvas(1920, 1440);
 
     // init graham scan algorithm
-    convexHull = new ConvexHullGrahamScan();
+    grahamScan = new ConvexHullGrahamScan();
 
     // init serial connection with baudrate
     serialController = new SerialController(57600);
@@ -70,11 +77,11 @@ function draw() {
     scale(-1, 1);
 
     if (localData) {
-        drawLandmarksAsPoints(localData, localConvexHull, 0);
+        drawLandmarksAsPoints(localData, localStrokeWeight, 0);
     }
 
     if (externalData) {
-        drawLandmarksAsPoints(externalData, externalConvexHull, 1);
+        drawLandmarksAsPoints(externalData, externalStrokeWeight, 1);
     }
 
     if (localConvexHull) {
@@ -100,7 +107,7 @@ function draw() {
         noStroke();
         fill(255);
         text(Math.round(polygonArea(localConvexHull) * 100) / 100, width / 2, 50);
-        text(getStrokeWeight(localData, localConvexHull), width / 2, 100);
+        text(localStrokeWeight, width / 2, 100);
     }
 
     if (intersectionArea) {
@@ -154,9 +161,7 @@ const camera = new Camera(videoElement, {
 
 camera.start();
 
-function drawLandmarksAsPoints(landmarks, convexHull, color) {
-    let weight = getStrokeWeight(landmarks, convexHull);
-
+function drawLandmarksAsPoints(landmarks, weight, color) {
     if (color === 0) {
         fill(0, 255, 0);
     } else if (color === 1) {
@@ -164,10 +169,13 @@ function drawLandmarksAsPoints(landmarks, convexHull, color) {
     }
     noStroke();
     for (let i = 0; i < landmarks.length; i++) {
-        ellipse(landmarks[i].x * width, landmarks[i].y * height, 100 * weight, 100 * weight);
+        ellipse(landmarks[i].x * width, landmarks[i].y * height, 80 * weight, 80 * weight);
     }
 }
 
+function drawHandprint(landmarks, convexHull){
+
+}
 
 function drawConvexHull(landmarks, filled) {
     if (filled === 1) {
