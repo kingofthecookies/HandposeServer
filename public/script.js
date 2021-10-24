@@ -26,7 +26,7 @@ socket.on('prediction', (data) => {
         grahamScan.addPoint(externalData[i].x, externalData[i].y);
     }
     externalConvexHull = grahamScan.getHull();
-    grahamScan = new ConvexHullGrahamScan(); // Reset the GrahamScan by overwriting it
+    grahamScan = new ConvexHullGrahamScan();
 
     // Compute the Stroke Weight
     externalStrokeWeight = getStrokeWeight(externalData, externalConvexHull);
@@ -45,7 +45,7 @@ function onResults(results) {
                 grahamScan.addPoint(localData[i].x, localData[i].y);
             }
             localConvexHull = grahamScan.getHull();
-            grahamScan = new ConvexHullGrahamScan(); // Reset the GrahamScan by overwriting it
+            grahamScan = new ConvexHullGrahamScan();
 
             // Compute the Stroke Weight
             localStrokeWeight = getStrokeWeight(localData, localConvexHull);
