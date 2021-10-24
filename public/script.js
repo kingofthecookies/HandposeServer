@@ -77,19 +77,13 @@ function draw() {
     scale(-1, 1);
 
     if (localData) {
-        drawLandmarksAsPoints(localData, localStrokeWeight, 0);
+        drawHandprint(localData, localStrokeWeight);
+        //drawLandmarksAsPoints(localData, localStrokeWeight, 0);
     }
 
     if (externalData) {
-        drawLandmarksAsPoints(externalData, externalStrokeWeight, 1);
-    }
-
-    if (localConvexHull) {
-        drawConvexHull(localConvexHull);
-    }
-
-    if (externalConvexHull) {
-        drawConvexHull(externalConvexHull);
+        drawHandprint(externalData, externalStrokeWeight);
+        //drawLandmarksAsPoints(externalData, externalStrokeWeight, 1);
     }
 
     if (localConvexHull && externalConvexHull) {
@@ -99,6 +93,7 @@ function draw() {
         }
     }
 
+    /**
     if (localConvexHull) {
         resetMatrix();
         textAlign(CENTER, CENTER);
@@ -109,6 +104,7 @@ function draw() {
         text(Math.round(polygonArea(localConvexHull) * 100) / 100, width / 2, 50);
         text(localStrokeWeight, width / 2, 100);
     }
+     **/
 
     if (intersectionArea) {
         if (intersectionArea.length > 0) {
@@ -173,8 +169,81 @@ function drawLandmarksAsPoints(landmarks, weight, color) {
     }
 }
 
-function drawHandprint(landmarks, convexHull){
+function drawHandprint(points, weight){
+    fill(255);
+    stroke(255);
+    // Hand Segment 1
+    beginShape();
+    curveVertex(points[1].x * width, points[1].y * height);
+    curveVertex(points[1].x * width, points[1].y * height);
+    curveVertex(points[0].x * width, points[0].y * height);
+    curveVertex(points[17].x * width, points[17].y * height);
+    curveVertex(points[13].x * width, points[13].y * height);
+    curveVertex(points[9].x * width, points[9].y * height);
+    curveVertex(points[5].x * width, points[5].y * height);
+    curveVertex(points[2].x * width, points[2].y * height);
+    endShape(CLOSE);
 
+    // Hand Segment 2
+    beginShape();
+    curveVertex(points[1].x * width, points[1].y * height);
+    curveVertex(points[1].x * width, points[1].y * height);
+    curveVertex(points[0].x * width, points[0].y * height);
+    curveVertex(points[5].x * width, points[5].y * height);
+    curveVertex(points[2].x * width, points[2].y * height);
+    endShape(CLOSE);
+
+    // Thumb
+    noFill();
+    strokeWeight(weight * 100);
+    beginShape();
+    curveVertex(points[2].x * width, points[2].y * height);
+    curveVertex(points[2].x * width, points[2].y * height);
+    curveVertex(points[3].x * width, points[3].y * height);
+    curveVertex(points[4].x * width, points[4].y * height);
+    curveVertex(points[4].x * width, points[4].y * height);
+    endShape();
+
+    // Index Finger
+    strokeWeight(weight * 90);
+    beginShape();
+    curveVertex(points[5].x * width, points[5].y * height);
+    curveVertex(points[5].x * width, points[5].y * height);
+    curveVertex(points[6].x * width, points[6].y * height);
+    curveVertex(points[7].x * width, points[7].y * height);
+    curveVertex(points[8].x * width, points[8].y * height);
+    curveVertex(points[8].x * width, points[8].y * height);
+    endShape();
+
+    // Middle Finger
+    beginShape();
+    curveVertex(points[9].x * width, points[9].y * height);
+    curveVertex(points[9].x * width, points[9].y * height);
+    curveVertex(points[10].x * width, points[10].y * height);
+    curveVertex(points[11].x * width, points[11].y * height);
+    curveVertex(points[12].x * width, points[12].y * height);
+    curveVertex(points[12].x * width, points[12].y * height);
+    endShape();
+
+    // Ring Finger
+    beginShape();
+    curveVertex(points[13].x * width, points[13].y * height);
+    curveVertex(points[13].x * width, points[13].y * height);
+    curveVertex(points[14].x * width, points[14].y * height);
+    curveVertex(points[15].x * width, points[15].y * height);
+    curveVertex(points[16].x * width, points[16].y * height);
+    curveVertex(points[16].x * width, points[16].y * height);
+    endShape();
+
+    // Pinky
+    beginShape();
+    curveVertex(points[17].x * width, points[17].y * height);
+    curveVertex(points[17].x * width, points[17].y * height);
+    curveVertex(points[18].x * width, points[18].y * height);
+    curveVertex(points[19].x * width, points[19].y * height);
+    curveVertex(points[20].x * width, points[20].y * height);
+    curveVertex(points[20].x * width, points[20].y * height);
+    endShape();
 }
 
 function drawConvexHull(landmarks, filled) {
