@@ -37,7 +37,7 @@ socket.on('prediction', (data) => {
 function onResults(results) {
     if (results.multiHandLandmarks) {
         if (results.multiHandLandmarks.length > 0) {
-            localData = results.multiHandLandmarks[0];
+            localData = getAuxiliaryPoints(results.multiHandLandmarks[0]);
             socket.emit('prediction', localData); // Emit the new prediction to Server
 
             // Finding the Convex Hull
@@ -77,7 +77,7 @@ function draw() {
     scale(-1, 1);
 
     if (localData) {
-        drawHandprint(localData, localStrokeWeight);
+        drawHandprintNew(localData, localStrokeWeight);
         //drawLandmarksAsPoints(localData, localStrokeWeight, 0);
     }
 
@@ -94,7 +94,7 @@ function draw() {
     }
 
     /**
-    if (localConvexHull) {
+     if (localConvexHull) {
         resetMatrix();
         textAlign(CENTER, CENTER);
         textSize(60);
@@ -165,11 +165,11 @@ function drawLandmarksAsPoints(landmarks, weight, color) {
     }
     noStroke();
     for (let i = 0; i < landmarks.length; i++) {
-        ellipse(landmarks[i].x * width, landmarks[i].y * height, 80 * weight, 80 * weight);
+        ellipse(landmarks[i].x * width, landmarks[i].y * height, 50 * weight, 50 * weight);
     }
 }
 
-function drawHandprint(points, weight){
+function drawHandprint(points, weight) {
     fill(255);
     stroke(255);
     // Hand Segment 1
@@ -244,6 +244,143 @@ function drawHandprint(points, weight){
     curveVertex(points[20].x * width, points[20].y * height);
     curveVertex(points[20].x * width, points[20].y * height);
     endShape();
+}
+
+function drawHandprintNew(points, weight) {
+    // Hand Segment 1
+    fill(255);
+    stroke(255);
+    strokeWeight(weight * 90);
+    strokeCap(ROUND);
+    beginShape();
+    curveVertex(points[1].x * width, points[1].y * height);
+    curveVertex(points[1].x * width, points[1].y * height);
+    curveVertex(points[0].x * width, points[0].y * height);
+    curveVertex(points[25].x * width, points[25].y * height);
+    curveVertex(points[30].x * width, points[30].y * height);
+    curveVertex(points[24].x * width, points[24].y * height);
+    curveVertex(points[29].x * width, points[29].y * height);
+    curveVertex(points[23].x * width, points[23].y * height);
+    curveVertex(points[28].x * width, points[28].y * height);
+    curveVertex(points[22].x * width, points[22].y * height);
+    curveVertex(points[27].x * width, points[27].y * height);
+    curveVertex(points[21].x * width, points[21].y * height);
+    curveVertex(points[26].x * width, points[26].y * height);
+    curveVertex(points[2].x * width, points[2].y * height);
+    endShape(CLOSE);
+
+    // Hand Segment 2
+    fill(255);
+    noStroke();
+    beginShape();
+    curveVertex(points[1].x * width, points[1].y * height);
+    curveVertex(points[1].x * width, points[1].y * height);
+    curveVertex(points[0].x * width, points[0].y * height);
+    curveVertex(points[25].x * width, points[25].y * height);
+    curveVertex(points[9].x * width, points[9].y * height);
+    curveVertex(points[5].x * width, points[5].y * height);
+    curveVertex(points[21].x * width, points[21].y * height);
+    curveVertex(points[26].x * width, points[26].y * height);
+    curveVertex(points[2].x * width, points[2].y * height);
+    endShape(CLOSE);
+
+    // Thumb
+    noFill();
+    stroke(255);
+    strokeWeight(weight * 100);
+    strokeCap(ROUND);
+    line(points[2].x * width, points[2].y * height, points[3].x * width, points[3].y * height);
+    line(points[3].x * width, points[3].y * height, points[4].x * width, points[4].y * height);
+
+    // Index Finger
+    strokeWeight(weight * 90);
+    line(points[5].x * width, points[5].y * height, points[6].x * width, points[6].y * height);
+    line(points[6].x * width, points[6].y * height, points[7].x * width, points[7].y * height);
+    line(points[7].x * width, points[7].y * height, points[8].x * width, points[8].y * height);
+
+    // Middle Finger
+    line(points[9].x * width, points[9].y * height, points[10].x * width, points[10].y * height);
+    line(points[10].x * width, points[10].y * height, points[11].x * width, points[11].y * height);
+    line(points[11].x * width, points[11].y * height, points[12].x * width, points[12].y * height);
+
+    // Ring Finger
+    line(points[13].x * width, points[13].y * height, points[14].x * width, points[14].y * height);
+    line(points[14].x * width, points[14].y * height, points[15].x * width, points[15].y * height);
+    line(points[15].x * width, points[15].y * height, points[16].x * width, points[16].y * height);
+
+    // Pinky
+    line(points[17].x * width, points[17].y * height, points[18].x * width, points[18].y * height);
+    line(points[18].x * width, points[18].y * height, points[19].x * width, points[19].y * height);
+    line(points[19].x * width, points[19].y * height, points[20].x * width, points[20].y * height);
+}
+
+function getAuxiliaryPoints(points) {
+    let p1, p2, v1, v2;
+    let result = [];
+
+    for (let i = 0; i < points.length; i++) {
+        result[i] = points[i];
+    }
+
+    // Auxiliary Point 22
+    p1 = getMiddlePoint(points[2], points[5]);
+    result[points.length] = p1;
+
+    // Auxiliary Point 23
+    p1 = getMiddlePoint(points[5], points[9]);
+    result[points.length + 1] = p1;
+
+    // Auxiliary Point 24
+    p1 = getMiddlePoint(points[9], points[13]);
+    result[points.length + 2] = p1;
+
+    // Auxiliary Point 25
+    p1 = getMiddlePoint(points[13], points[17]);
+    result[points.length + 3] = p1;
+
+    // Auxiliary Point 26
+    v1 = {};
+    v1.x = points[17].x - points[0].x;
+    v1.y = points[17].y - points[0].y;
+    p1 = {};
+    p1.x = points[0].x + 0.3 * v1.x;
+    p1.y = points[0].y + 0.3 * v1.y;
+    v2 = {};
+    v2.x = p1.x - points[1].x;
+    v2.y = p1.y - points[1].y;
+    p2 = {};
+    p2.x = p1.x + 0.3 * v2.x;
+    p2.y = p1.y + 0.3 * v2.y;
+    result[points.length + 4] = p2;
+
+    // Auxiliary Point 27
+    p1 = getMiddlePoint(points[2], points[3]);
+    result[points.length + 5] = p1;
+
+    // Auxiliary Point 28
+    p1 = getMiddlePoint(points[5], points[6]);
+    result[points.length + 6] = p1;
+
+    // Auxiliary Point 29
+    p1 = getMiddlePoint(points[9], points[10]);
+    result[points.length + 7] = p1;
+
+    // Auxiliary Point 30
+    p1 = getMiddlePoint(points[13], points[14]);
+    result[points.length + 8] = p1;
+
+    // Auxiliary Point 31
+    p1 = getMiddlePoint(points[17], points[18]);
+    result[points.length + 9] = p1;
+
+    return result;
+}
+
+function getMiddlePoint(pointA, pointB) {
+    let result = {};
+    result.x = pointA.x + (pointB.x - pointA.x) / 2;
+    result.y = pointA.y + (pointB.y - pointA.y) / 2;
+    return result;
 }
 
 function drawConvexHull(landmarks, filled) {
