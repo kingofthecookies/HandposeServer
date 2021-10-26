@@ -82,7 +82,7 @@ function draw() {
     }
 
     if (externalData) {
-        drawHandprint(externalData, externalStrokeWeight);
+        drawHandprintNew(externalData, externalStrokeWeight);
         //drawLandmarksAsPoints(externalData, externalStrokeWeight, 1);
     }
 
@@ -276,13 +276,22 @@ function drawHandprintNew(points, weight) {
     curveVertex(points[1].x * width, points[1].y * height);
     curveVertex(points[1].x * width, points[1].y * height);
     curveVertex(points[0].x * width, points[0].y * height);
-    curveVertex(points[25].x * width, points[25].y * height);
-    curveVertex(points[9].x * width, points[9].y * height);
     curveVertex(points[5].x * width, points[5].y * height);
     curveVertex(points[21].x * width, points[21].y * height);
-    curveVertex(points[26].x * width, points[26].y * height);
     curveVertex(points[2].x * width, points[2].y * height);
     endShape(CLOSE);
+
+    // Hand Segment 3
+    noFill();
+    stroke(255);
+    strokeWeight(weight * 90);
+    beginShape();
+    curveVertex(points[17].x * width, points[17].y * height);
+    curveVertex(points[17].x * width, points[17].y * height);
+    curveVertex(points[25].x * width, points[25].y * height);
+    curveVertex(points[0].x * width, points[0].y * height);
+    curveVertex(points[1].x * width, points[1].y * height);
+    endShape();
 
     // Thumb
     noFill();
