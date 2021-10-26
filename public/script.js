@@ -4,6 +4,10 @@ let grahamScan;
 let connectButton;
 let serialController;
 
+let settings = false;
+let mirrorAxis = {x: false, y: false};
+let scaleFactor = 1;
+let offsetVector = {x: 0.0, y: 0.0};
 let externalData = 0;
 let localData = 0;
 let externalConvexHull = 0;
@@ -38,6 +42,7 @@ function onResults(results) {
     if (results.multiHandLandmarks) {
         if (results.multiHandLandmarks.length > 0) {
             localData = getAuxiliaryPoints(results.multiHandLandmarks[0]);
+            localData = correctValues(localData, offsetVector, scaleFactor, mirrorAxis);
             socket.emit('prediction', localData); // Emit the new prediction to Server
 
             // Finding the Convex Hull
@@ -53,6 +58,35 @@ function onResults(results) {
         }
     }
 }
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === "ArrowUp") {
+        offsetVector.x -= 0.01;
+        offsetVector.x = Math.round(offsetVector.x * 100) / 100;
+    } else if (e.key === "ArrowDown") {
+        offsetVector.x += 0.01;
+        offsetVector.x = Math.round(offsetVector.x * 100) / 100;
+    } else if (e.key === "ArrowLeft") {
+        offsetVector.y += 0.01;
+        offsetVector.y = Math.round(offsetVector.y * 100) / 100;
+    } else if (e.key === "ArrowRight") {
+        offsetVector.y -= 0.01;
+        offsetVector.y = Math.round(offsetVector.y * 100) / 100;
+    } else if (e.key === "+") {
+        scaleFactor += 0.01;
+        scaleFactor = Math.round(scaleFactor * 100) / 100;
+    } else if (e.key === "-") {
+        scaleFactor -= 0.01;
+        scaleFactor = Math.round(scaleFactor * 100) / 100;
+    } else if (e.key === "x") {
+        mirrorAxis.x = !mirrorAxis.x;
+        console.log(mirrorAxis.x);
+    } else if (e.key === "y") {
+        mirrorAxis.y = !mirrorAxis.y;
+    } else if (e.key === "s") {
+        settings = !settings;
+    }
+});
 
 function setup() {
     createCanvas(1920, 1440);
@@ -76,35 +110,22 @@ function draw() {
     translate(width, 0);
     scale(-1, 1);
 
-    if (localData) {
-        drawHandprintNew(localData, localStrokeWeight);
-        //drawLandmarksAsPoints(localData, localStrokeWeight, 0);
-    }
-
-    if (externalData) {
-        drawHandprintNew(externalData, externalStrokeWeight);
-        //drawLandmarksAsPoints(externalData, externalStrokeWeight, 1);
+    if (settings) {
+        if (localData) {
+            drawLandmarksAsPoints(localData, localStrokeWeight, 0);
+        }
+    } else {
+        if (externalData) {
+            drawHandprint(externalData, externalStrokeWeight);
+        }
     }
 
     if (localConvexHull && externalConvexHull) {
         intersectionArea = intersect(localConvexHull, externalConvexHull);
         if (intersectionArea.length > 0) {
-            drawConvexHull(intersectionArea[0], 1);
+            // drawConvexHull(intersectionArea[0], 1);
         }
     }
-
-    /**
-     if (localConvexHull) {
-        resetMatrix();
-        textAlign(CENTER, CENTER);
-        textSize(60);
-        textWidth(1);
-        noStroke();
-        fill(255);
-        text(Math.round(polygonArea(localConvexHull) * 100) / 100, width / 2, 50);
-        text(localStrokeWeight, width / 2, 100);
-    }
-     **/
 
     if (intersectionArea) {
         if (intersectionArea.length > 0) {
@@ -164,92 +185,15 @@ function drawLandmarksAsPoints(landmarks, weight, color) {
         fill(255, 0, 0);
     }
     noStroke();
-    for (let i = 0; i < landmarks.length; i++) {
+    for (let i = 0; i < 21; i++) {
         ellipse(landmarks[i].x * width, landmarks[i].y * height, 50 * weight, 50 * weight);
     }
 }
 
-function drawHandprint(points, weight) {
-    fill(255);
-    stroke(255);
+function drawHandprint(points, weight, shade = 100) {
     // Hand Segment 1
-    beginShape();
-    curveVertex(points[1].x * width, points[1].y * height);
-    curveVertex(points[1].x * width, points[1].y * height);
-    curveVertex(points[0].x * width, points[0].y * height);
-    curveVertex(points[17].x * width, points[17].y * height);
-    curveVertex(points[13].x * width, points[13].y * height);
-    curveVertex(points[9].x * width, points[9].y * height);
-    curveVertex(points[5].x * width, points[5].y * height);
-    curveVertex(points[2].x * width, points[2].y * height);
-    endShape(CLOSE);
-
-    // Hand Segment 2
-    beginShape();
-    curveVertex(points[1].x * width, points[1].y * height);
-    curveVertex(points[1].x * width, points[1].y * height);
-    curveVertex(points[0].x * width, points[0].y * height);
-    curveVertex(points[5].x * width, points[5].y * height);
-    curveVertex(points[2].x * width, points[2].y * height);
-    endShape(CLOSE);
-
-    // Thumb
-    noFill();
-    strokeWeight(weight * 100);
-    beginShape();
-    curveVertex(points[2].x * width, points[2].y * height);
-    curveVertex(points[2].x * width, points[2].y * height);
-    curveVertex(points[3].x * width, points[3].y * height);
-    curveVertex(points[4].x * width, points[4].y * height);
-    curveVertex(points[4].x * width, points[4].y * height);
-    endShape();
-
-    // Index Finger
-    strokeWeight(weight * 90);
-    beginShape();
-    curveVertex(points[5].x * width, points[5].y * height);
-    curveVertex(points[5].x * width, points[5].y * height);
-    curveVertex(points[6].x * width, points[6].y * height);
-    curveVertex(points[7].x * width, points[7].y * height);
-    curveVertex(points[8].x * width, points[8].y * height);
-    curveVertex(points[8].x * width, points[8].y * height);
-    endShape();
-
-    // Middle Finger
-    beginShape();
-    curveVertex(points[9].x * width, points[9].y * height);
-    curveVertex(points[9].x * width, points[9].y * height);
-    curveVertex(points[10].x * width, points[10].y * height);
-    curveVertex(points[11].x * width, points[11].y * height);
-    curveVertex(points[12].x * width, points[12].y * height);
-    curveVertex(points[12].x * width, points[12].y * height);
-    endShape();
-
-    // Ring Finger
-    beginShape();
-    curveVertex(points[13].x * width, points[13].y * height);
-    curveVertex(points[13].x * width, points[13].y * height);
-    curveVertex(points[14].x * width, points[14].y * height);
-    curveVertex(points[15].x * width, points[15].y * height);
-    curveVertex(points[16].x * width, points[16].y * height);
-    curveVertex(points[16].x * width, points[16].y * height);
-    endShape();
-
-    // Pinky
-    beginShape();
-    curveVertex(points[17].x * width, points[17].y * height);
-    curveVertex(points[17].x * width, points[17].y * height);
-    curveVertex(points[18].x * width, points[18].y * height);
-    curveVertex(points[19].x * width, points[19].y * height);
-    curveVertex(points[20].x * width, points[20].y * height);
-    curveVertex(points[20].x * width, points[20].y * height);
-    endShape();
-}
-
-function drawHandprintNew(points, weight) {
-    // Hand Segment 1
-    fill(255);
-    stroke(255);
+    fill(shade);
+    stroke(shade);
     strokeWeight(weight * 90);
     strokeCap(ROUND);
     beginShape();
@@ -270,7 +214,7 @@ function drawHandprintNew(points, weight) {
     endShape(CLOSE);
 
     // Hand Segment 2
-    fill(255);
+    fill(shade);
     noStroke();
     beginShape();
     curveVertex(points[1].x * width, points[1].y * height);
@@ -283,7 +227,7 @@ function drawHandprintNew(points, weight) {
 
     // Hand Segment 3
     noFill();
-    stroke(255);
+    stroke(shade);
     strokeWeight(weight * 90);
     beginShape();
     curveVertex(points[17].x * width, points[17].y * height);
@@ -295,7 +239,7 @@ function drawHandprintNew(points, weight) {
 
     // Thumb
     noFill();
-    stroke(255);
+    stroke(shade);
     strokeWeight(weight * 100);
     strokeCap(ROUND);
     line(points[2].x * width, points[2].y * height, points[3].x * width, points[3].y * height);
@@ -382,6 +326,44 @@ function getAuxiliaryPoints(points) {
     p1 = getMiddlePoint(points[17], points[18]);
     result[points.length + 9] = p1;
 
+    return result;
+}
+
+function correctValues(points, offsetVector, scaleFactor, mirrorAxis) {
+    let result = [];
+    let baseVector = {};
+
+    baseVector.x = points[0].x;
+    baseVector.y = points[0].y;
+
+    for (let i = 0; i < points.length; i++) {
+        result[i] = {};
+        result[i].x = points[i].x;
+        result[i].y = points[i].y;
+    }
+
+    if (mirrorAxis.x) {
+        for (let i = 0; i < points.length; i++) {
+            result[i].x = 1 - result[i].x;
+        }
+    }
+
+    if (mirrorAxis.y) {
+        for (let i = 0; i < points.length; i++) {
+            result[i].y = 1 - result[i].y;
+        }
+    }
+
+    for (let i = 0; i < points.length; i++) {
+        result[i].x -= baseVector.x;
+        result[i].y -= baseVector.y;
+        result[i].x *= scaleFactor;
+        result[i].y *= scaleFactor;
+        result[i].x += baseVector.x;
+        result[i].y += baseVector.y;
+        result[i].x += offsetVector.x;
+        result[i].y += offsetVector.y;
+    }
     return result;
 }
 
