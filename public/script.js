@@ -11,15 +11,18 @@ let scaleFactor = 1;
 
 let localData = 0;
 let localConvexHull = 0;
+let localConvexHullArea = 0;
 let localStrokeWeight = 0.0;
 let localDataTimeout = 20;
 
 let externalData = 0;
 let externalConvexHull = 0;
+let externalConvexHullArea = 0;
 let externalStrokeWeight = 0.0;
 let externalDataTimeout = 20;
 
 let intersectionHull = 0;
+let intersectionHullArea = 0;
 
 
 // Initiate socket connection to server URL
@@ -29,15 +32,18 @@ socket = io.connect('http://localhost:3000');
 socket.on('prediction', (data) => {
     externalData = data;
 
-    // Finding the Convex Hull
+    // Finding the External Convex Hull
     for (let i = 0; i < 21; i++) {
         grahamScan.addPoint(externalData[i].x, externalData[i].y);
     }
     externalConvexHull = grahamScan.getHull();
     grahamScan = new ConvexHullGrahamScan();
 
-    // Compute the Stroke Weight
-    externalStrokeWeight = getStrokeWeight(externalData, externalConvexHull);
+    // Compute External Convex Hull Area
+    externalConvexHullArea = calcPolygonArea(externalConvexHull);
+
+    // Compute the External Stroke Weight
+    externalStrokeWeight = getStrokeWeight(externalData, externalConvexHullArea);
     externalDataTimeout = 20; // Reset the Timer for external Data
 })
 
@@ -49,26 +55,31 @@ function onResults(results) {
             localData = correctValues(localData, offsetVector, scaleFactor, mirrorAxis);
             socket.emit('prediction', localData); // Emit the new prediction to Server
 
-            // Finding the Convex Hull
+            // Finding the Local Convex Hull
             for (let i = 0; i < 21; i++) {
                 grahamScan.addPoint(localData[i].x, localData[i].y);
             }
             localConvexHull = grahamScan.getHull();
             grahamScan = new ConvexHullGrahamScan();
 
-            // Compute the Stroke Weight
-            localStrokeWeight = getStrokeWeight(localData, localConvexHull);
-            localDataTimeout = 20; // Reset the Timer for internal Data
+            // Finding the Local Convex Hull Area
+            localConvexHullArea = calcPolygonArea(localConvexHull);
 
-            // Compute the Intersection Area
+            // Compute the Local Stroke Weight
+            localStrokeWeight = getStrokeWeight(localData, localConvexHullArea);
+
+            // Compute the Intersection Hull & Area
             if (localConvexHull && externalConvexHull) {
                 intersectionHull = intersect(localConvexHull, externalConvexHull);
                 if (intersectionHull.length > 0) {
                     intersectionHull = intersectionHull[0];
+                    intersectionHullArea = calcPolygonArea(intersectionHull);
                 } else {
                     intersectionHull = 0;
                 }
             }
+            // Reset the Timer for internal Data
+            localDataTimeout = 20;
         }
     }
 }
@@ -134,14 +145,14 @@ function draw() {
         }
         if (intersectionHull) {
             drawConvexHull(intersectionHull, 1);
-            let randomInt = Math.floor(Math.random() * 255);
+            let proportion = Math.floor(intersectionHullArea/localConvexHullArea * 255);
 
-            console.log("contact")
+            console.log(proportion);
 
             // write value to serial port
             serialController.write("CONTACT");
             serialController.write(" "); // If sending multiple variables, they are seperated with a blank space
-            serialController.write(randomInt); // send integer as string
+            serialController.write(proportion); // send integer as string
             serialController.write("\r\n"); // to finish your message, send a "new line character"
         }
     }
@@ -397,8 +408,7 @@ function drawConvexHull(landmarks, filled) {
     endShape(CLOSE);
 }
 
-function getStrokeWeight(points, convexHull) {
-    let area = calcPolygonArea(convexHull);
+function getStrokeWeight(points, area) {
     let weight = 0.0;
 
     weight += distance(points[0], points[4]);
