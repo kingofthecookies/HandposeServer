@@ -146,7 +146,6 @@ function draw() {
         if (intersectionHull) {
             drawConvexHull(intersectionHull, 1);
             let proportion = Math.floor(intersectionHullArea/localConvexHullArea * 255);
-
             console.log(proportion);
 
             // write value to serial port
@@ -154,6 +153,11 @@ function draw() {
             serialController.write(" "); // If sending multiple variables, they are seperated with a blank space
             serialController.write(proportion); // send integer as string
             serialController.write("\r\n"); // to finish your message, send a "new line character"
+        } else{
+            serialController.write("CONTACT");
+            serialController.write(" ");
+            serialController.write(0);
+            serialController.write("\r\n");
         }
     }
 
@@ -208,7 +212,7 @@ function drawLandmarksAsPoints(landmarks, weight, color) {
     }
 }
 
-function drawHandprint(points, weight, shade = 100) {
+function drawHandprint(points, weight, shade = 255) {
     // Hand Segment 1
     fill(shade);
     stroke(shade);
