@@ -6,17 +6,21 @@ let serialController;
 
 let settings = false;
 let mirrorAxis = {x: false, y: false};
-let scaleFactor = 1;
 let offsetVector = {x: 0.0, y: 0.0};
-let externalData = 0;
+let scaleFactor = 1;
+
 let localData = 0;
-let externalConvexHull = 0;
 let localConvexHull = 0;
 let localStrokeWeight = 0.0;
-let externalStrokeWeight = 0.0;
-let intersectionArea = 0;
-let externalDataTimeout = 20;
 let localDataTimeout = 20;
+
+let externalData = 0;
+let externalConvexHull = 0;
+let externalStrokeWeight = 0.0;
+let externalDataTimeout = 20;
+
+let intersectionHull = 0;
+
 
 // Initiate socket connection to server URL
 socket = io.connect('http://localhost:3000');
@@ -26,7 +30,7 @@ socket.on('prediction', (data) => {
     externalData = data;
 
     // Finding the Convex Hull
-    for (let i = 0; i < externalData.length; i++) {
+    for (let i = 0; i < 21; i++) {
         grahamScan.addPoint(externalData[i].x, externalData[i].y);
     }
     externalConvexHull = grahamScan.getHull();
@@ -46,7 +50,7 @@ function onResults(results) {
             socket.emit('prediction', localData); // Emit the new prediction to Server
 
             // Finding the Convex Hull
-            for (let i = 0; i < localData.length; i++) {
+            for (let i = 0; i < 21; i++) {
                 grahamScan.addPoint(localData[i].x, localData[i].y);
             }
             localConvexHull = grahamScan.getHull();
@@ -55,6 +59,16 @@ function onResults(results) {
             // Compute the Stroke Weight
             localStrokeWeight = getStrokeWeight(localData, localConvexHull);
             localDataTimeout = 20; // Reset the Timer for internal Data
+
+            // Compute the Intersection Area
+            if (localConvexHull && externalConvexHull) {
+                intersectionHull = intersect(localConvexHull, externalConvexHull);
+                if (intersectionHull.length > 0) {
+                    intersectionHull = intersectionHull[0];
+                } else {
+                    intersectionHull = 0;
+                }
+            }
         }
     }
 }
@@ -118,39 +132,32 @@ function draw() {
         if (externalData) {
             drawHandprint(externalData, externalStrokeWeight);
         }
-    }
+        if (intersectionHull) {
+            drawConvexHull(intersectionHull, 1);
+            let randomInt = Math.floor(Math.random() * 255);
 
-    if (localConvexHull && externalConvexHull) {
-        intersectionArea = intersect(localConvexHull, externalConvexHull);
-        if (intersectionArea.length > 0) {
-            // drawConvexHull(intersectionArea[0], 1);
-        }
-    }
-
-    if (intersectionArea) {
-        if (intersectionArea.length > 0) {
-            let randomInt = Math.floor(Math.random() * 180);
+            console.log("contact")
 
             // write value to serial port
-            serialController.write("WHATEVER");
+            serialController.write("CONTACT");
             serialController.write(" "); // If sending multiple variables, they are seperated with a blank space
             serialController.write(randomInt); // send integer as string
             serialController.write("\r\n"); // to finish your message, send a "new line character"
         }
     }
 
-    // Decrementing the local and external Timers
+// Decrementing the local and external Timers
     localDataTimeout -= 1;
     externalDataTimeout -= 1;
     if (localDataTimeout <= 0) {
         localData = 0;
         localConvexHull = 0;
-        intersectionArea = 0;
+        intersectionHull = 0;
     }
     if (externalDataTimeout <= 0) {
         externalData = 0;
         externalConvexHull = 0;
-        intersectionArea = 0;
+        intersectionHull = 0;
     }
 }
 
