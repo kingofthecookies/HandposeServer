@@ -26,14 +26,14 @@ let intersectionHullArea = 0;
 
 
 // Initiate socket connection to server URL
-socket = io.connect('http://localhost:3000');
+socket = io.connect('http://192.168.0.131:3000');
 
 // Client receives new Data from the Server
 socket.on('prediction', (data) => {
     externalData = data;
 
     // Finding the External Convex Hull
-    for (let i = 0; i < 21; i++) {
+    for (let i = 0; i < externalData.length; i++) {
         grahamScan.addPoint(externalData[i].x, externalData[i].y);
     }
     externalConvexHull = grahamScan.getHull();
@@ -53,10 +53,14 @@ function onResults(results) {
         if (results.multiHandLandmarks.length > 0) {
             localData = getAuxiliaryPoints(results.multiHandLandmarks[0]);
             localData = correctValues(localData, offsetVector, scaleFactor, mirrorAxis);
-            socket.emit('prediction', localData); // Emit the new prediction to Server
+
+            // Emit the new prediction to Server if not in Settings
+            if(!settings) {
+                socket.emit('prediction', localData);
+            }
 
             // Finding the Local Convex Hull
-            for (let i = 0; i < 21; i++) {
+            for (let i = 0; i < localData.length; i++) {
                 grahamScan.addPoint(localData[i].x, localData[i].y);
             }
             localConvexHull = grahamScan.getHull();
