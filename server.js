@@ -1,6 +1,6 @@
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5000;
 
-// importing express library and setting up server on port 3000
+// importing express library and setting up server on port 5000
 let express = require('express');
 let app = express();
 let server = app.listen(port);

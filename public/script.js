@@ -27,6 +27,7 @@ let intersectionHullArea = 0;
 
 // Initiate socket connection to server URL
 // Use http://192.168.0.131:3000 for Servers in the local Network
+// For deployment on Heroku use https://was-vor-der-sprache-kam.herokuapp.com/
 socket = io.connect('https://was-vor-der-sprache-kam.herokuapp.com/');
 
 // Client receives new Data from the Server
