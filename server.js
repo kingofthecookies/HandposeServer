@@ -5,14 +5,15 @@ let express = require('express');
 let app = express();
 let server = app.listen(port);
 
+let socket = require('socket.io');
+let io = socket(server);
+
 // define public directory as static
 // meaning those are the files available to the client
 app.use(express.static('public'));
 
 console.log("Server is running.");
 
-let socket = require('socket.io');
-let io = socket(server);
 
 // execute newConnection when connection event occurs
 io.sockets.on('connection', newConnection);
