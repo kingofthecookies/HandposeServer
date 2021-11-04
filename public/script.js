@@ -26,7 +26,8 @@ let intersectionHullArea = 0;
 
 
 // Initiate socket connection to server URL
-socket = io.connect('http://192.168.0.131:3000');
+// Use http://192.168.0.131:3000 for Servers in the local Network
+socket = io.connect('https://was-vor-der-sprache-kam.herokuapp.com/');
 
 // Client receives new Data from the Server
 socket.on('prediction', (data) => {
