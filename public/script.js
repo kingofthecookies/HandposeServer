@@ -4,7 +4,7 @@ let grahamScan;
 let connectButton;
 let serialController;
 
-let settings = false;
+let settings = true;
 let mirrorAxis = {x: false, y: false};
 let offsetVector = {x: 0.0, y: 0.0};
 let scaleFactor = 1;
@@ -57,7 +57,7 @@ function onResults(results) {
             localData = correctValues(localData, offsetVector, scaleFactor, mirrorAxis);
 
             // Emit the new prediction to Server if not in Settings
-            if(!settings) {
+            if (!settings) {
                 socket.emit('prediction', localData);
             }
 
@@ -90,37 +90,52 @@ function onResults(results) {
     }
 }
 
+// Add User Interface to adjust size and position of the Handshape
 document.addEventListener('keydown', (e) => {
     if (e.key === "ArrowUp") {
         offsetVector.x -= 0.01;
         offsetVector.x = Math.round(offsetVector.x * 100) / 100;
+        localStorage.offsetVectorX = offsetVector.x;
     } else if (e.key === "ArrowDown") {
         offsetVector.x += 0.01;
         offsetVector.x = Math.round(offsetVector.x * 100) / 100;
+        localStorage.offsetVectorX = offsetVector.x;
     } else if (e.key === "ArrowLeft") {
         offsetVector.y += 0.01;
         offsetVector.y = Math.round(offsetVector.y * 100) / 100;
+        localStorage.offsetVectorY = offsetVector.y;
     } else if (e.key === "ArrowRight") {
         offsetVector.y -= 0.01;
         offsetVector.y = Math.round(offsetVector.y * 100) / 100;
+        localStorage.offsetVectorY = offsetVector.y;
     } else if (e.key === "+") {
         scaleFactor += 0.01;
         scaleFactor = Math.round(scaleFactor * 100) / 100;
+        localStorage.scaleFactor = scaleFactor;
     } else if (e.key === "-") {
         scaleFactor -= 0.01;
         scaleFactor = Math.round(scaleFactor * 100) / 100;
+        localStorage.scaleFactor = scaleFactor;
     } else if (e.key === "x") {
         mirrorAxis.x = !mirrorAxis.x;
-        console.log(mirrorAxis.x);
+        localStorage.mirrorAxisX = mirrorAxis.x;
     } else if (e.key === "y") {
         mirrorAxis.y = !mirrorAxis.y;
+        localStorage.mirrorAxisY = mirrorAxis.y;
     } else if (e.key === "s") {
         settings = !settings;
+    } else if (e.key === "r") {
+        mirrorAxis = {x: false, y: false};
+        offsetVector = {x: 0.0, y: 0.0};
+        scaleFactor = 1;
     }
 });
 
 function setup() {
     createCanvas(1920, 1440);
+
+    // load Variables from the localStorage
+    loadLocalData();
 
     // init graham scan algorithm
     grahamScan = new ConvexHullGrahamScan();
@@ -151,15 +166,14 @@ function draw() {
         }
         if (intersectionHull) {
             drawConvexHull(intersectionHull, 1);
-            let proportion = Math.floor(intersectionHullArea/localConvexHullArea * 255);
-            console.log(proportion);
+            let proportion = Math.floor(intersectionHullArea / localConvexHullArea * 255);
 
             // write value to serial port
             serialController.write("CONTACT");
             serialController.write(" "); // If sending multiple variables, they are seperated with a blank space
             serialController.write(proportion); // send integer as string
             serialController.write("\r\n"); // to finish your message, send a "new line character"
-        } else{
+        } else {
             serialController.write("CONTACT");
             serialController.write(" ");
             serialController.write(0);
@@ -446,4 +460,22 @@ function calcPolygonArea(vertices) {
     }
 
     return Math.abs(total);
+}
+
+function loadLocalData() {
+    if (localStorage.offsetVectorX) {
+        offsetVector.x = parseFloat(localStorage.offsetVectorX);
+    }
+    if (localStorage.offsetVectorY) {
+        offsetVector.y = parseFloat(localStorage.offsetVectorY);
+    }
+    if (localStorage.scaleFactor) {
+        scaleFactor = parseFloat(localStorage.scaleFactor);
+    }
+    if (localStorage.mirrorAxisX) {
+        mirrorAxis.x = (localStorage.mirrorAxisX === 'true');
+    }
+    if (localStorage.mirrorAxisY) {
+        mirrorAxis.y = (localStorage.mirrorAxisY === 'true');
+    }
 }
