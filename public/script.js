@@ -26,7 +26,7 @@ let intersectionHullArea = 0;
 
 
 // Initiate socket connection to server URL
-// Use http://192.168.0.131:3000 for Servers in the local Network
+// Use http://localhost:5000 for Servers on this machine
 // For deployment on Heroku use https://was-vor-der-sprache-kam.herokuapp.com/
 socket = io.connect('https://was-vor-der-sprache-kam.herokuapp.com/');
 
@@ -165,7 +165,7 @@ function draw() {
             drawHandprint(externalData, externalStrokeWeight);
         }
         if (intersectionHull) {
-            drawConvexHull(intersectionHull, 1);
+            // drawConvexHull(intersectionHull, 1);
             let proportion = Math.floor(intersectionHullArea / localConvexHullArea * 255);
 
             // write value to serial port
